@@ -1,14 +1,16 @@
 import tkinter as tk
 from tkinter import ttk
-from tkinter import messagebox
+from tkinter import messagebox, filedialog
 from datetime import datetime
 import ttkbootstrap as ttkb
 from tkinter.font import Font
+
 
 # Function to automatically resize text based on window size
 def resize_text(event):
     new_size = max(12, int(root.winfo_width() / 30))
     font.configure(size=new_size)
+
 
 # Function to calculate Simple Interest
 def calculate_simple_interest():
@@ -30,6 +32,7 @@ def calculate_simple_interest():
         total_amount = principal + interest
 
         result_text = (
+            f"ऋण दिएको रकम: ₨ {principal:.2f}\n"
             f"अवधि: {days} दिन\n"
             f"ब्याज रकम: ₨ {interest:.2f}\n"
             f"कुल रकम: ₨ {total_amount:.2f}"
@@ -37,6 +40,7 @@ def calculate_simple_interest():
         result_label.config(text=result_text)
     except Exception as e:
         messagebox.showerror("त्रुटि", f"अमान्य इनपुट: {e}")
+
 
 # Function to calculate Compound Interest
 def calculate_compound_interest():
@@ -57,11 +61,12 @@ def calculate_compound_interest():
         n = 12  # Compounded monthly
         t = days / 365
 
-        amount = principal * (1 + (rate / (100 * n)))**(n * t)
+        amount = principal * (1 + (rate / (100 * n))) ** (n * t)
         interest = amount - principal
         total_amount = amount
 
         result_text = (
+            f"ऋण दिएको रकम: ₨ {principal:.2f}\n"
             f"अवधि: {days} दिन\n"
             f"ब्याज रकम: ₨ {interest:.2f}\n"
             f"कुल रकम: ₨ {total_amount:.2f}"
@@ -69,6 +74,7 @@ def calculate_compound_interest():
         result_label.config(text=result_text)
     except Exception as e:
         messagebox.showerror("त्रुटि", f"अमान्य इनपुट: {e}")
+
 
 # Function to switch between Simple and Compound Interest calculations
 def switch_calculation_mode(event):
@@ -78,44 +84,68 @@ def switch_calculation_mode(event):
     elif mode == 'चक्रवृद्धि ब्याज':
         calculate_button.config(command=calculate_compound_interest)
 
+
 # Function to show the About section
 def show_about():
     messagebox.showinfo(
         "ABOUT",
         "साधारण र चक्रवृद्धि ब्याजको गणना गर्ने एप्लिकेसन।\n"
-        "साधारण र चक्रवृद्धि ब्याजलाई विभिन्न अवधि र दरमा गणना गर्न सकिने।\n"
         "Developed by imsubhu\n"
         "Love From Nepal"
     )
 
+
+# Function to save the calculation details to a file
+def save_details():
+    details = result_label.cget("text")
+    if not details:
+        messagebox.showerror("Error", "No calculation to save. Please calculate first.")
+        return
+
+    # Auto-generate filename based on current date and interest type
+    current_date = datetime.now().strftime("%Y-%m-%d")
+    interest_type_str = interest_type.get()
+    file_name = f"{interest_type_str}_details_{current_date}.txt"
+
+    file_path = filedialog.asksaveasfilename(defaultextension=".txt", 
+                                             initialfile=file_name, 
+                                             filetypes=[("Text files", "*.txt")], 
+                                             title="Save Calculation Details")
+    if file_path:
+        try:
+            with open(file_path, "w", encoding="utf-8") as file:
+                # Include principal amount and other details
+                file.write(details)
+                file.write("\n\nDeveloped by imsubhu")
+            messagebox.showinfo("Saved", f"Details saved at {file_path}")
+        except Exception as e:
+            messagebox.showerror("Error", f"Could not save the file: {e}")
+
+
 # Create main application window
-root = ttkb.Window(themename="flatly")  # Bootstrap theme for modern look
+root = ttkb.Window(themename="flatly")
 root.title("साधारण ब्याज हिसाब किताब ")
 root.geometry("600x600")
 root.minsize(400, 400)
 
 # Font for dynamic resizing
 font = Font(family="Arial", size=12)
-result_font = Font(family="Arial", size=14, weight="bold")  # Bold font for results
-
-# Make the window resizable
-root.columnconfigure(0, weight=1)
-root.rowconfigure(0, weight=1)
+result_font = Font(family="Arial", size=14, weight="bold")
 
 # Create the menu
 menubar = tk.Menu(root)
 root.config(menu=menubar)
 
-# Add About menu to the right
+# Add About menu
 about_menu = tk.Menu(menubar, tearoff=0)
-about_menu.add_command(label="हाम्रो बारे ", command=show_about)
-menubar.add_cascade(label="हाम्रो बारे ", menu=about_menu)
+about_menu.add_command(label="हाम्रो बारे", command=show_about)
+menubar.add_cascade(label="हाम्रो बारे", menu=about_menu)
 
 # Title Label
 title_label = ttkb.Label(root, text="साधारण ब्याज हिसाब किताब ", font=("Arial", 18, "bold"), bootstyle="info")
 title_label.pack(pady=10)
 
-# Frame to hold input fields and make UI responsive
+# Frame for input fields
 frame = ttkb.Frame(root, padding=10)
 frame.pack(fill="both", expand=True)
 
@@ -124,12 +154,12 @@ ttkb.Label(frame, text="ऋण दिएको रकम (₨):").grid(row=0, co
 principal_entry = ttkb.Entry(frame)
 principal_entry.grid(row=0, column=1, pady=5, sticky="ew")
 
-# Interest rate input (annual or monthly rate in percentage)
+# Interest rate input
 ttkb.Label(frame, text="ब्याज दर (%):").grid(row=1, column=0, sticky=tk.W, pady=5)
 rate_entry = ttkb.Entry(frame)
 rate_entry.grid(row=1, column=1, pady=5, sticky="ew")
 
-# Dropdown to select rate type (per year or per month)
+# Dropdown to select rate type (annual or monthly)
 ttkb.Label(frame, text="ब्याज दरको प्रकार:").grid(row=2, column=0, sticky=tk.W, pady=5)
 rate_type = ttkb.Combobox(frame, values=["वर्ष अनुसार", "महिना अनुसार"], state="readonly")
 rate_type.current(0)
@@ -152,24 +182,28 @@ interest_type.current(0)
 interest_type.grid(row=5, column=1, pady=5, sticky="ew")
 
 # Button to calculate
-calculate_button = ttkb.Button(frame, text="हिसाब गर्नुहोस ", bootstyle="success")
+calculate_button = ttkb.Button(frame, text="हिसाब गर्नुहोस", bootstyle="success")
 calculate_button.grid(row=6, columnspan=2, pady=20, sticky="ew")
 
-# Bind the interest type selection to switch between calculation modes
+# Bind the interest type selection to switch between modes
 interest_type.bind("<<ComboboxSelected>>", switch_calculation_mode)
 
-# Label to display result
+# Button to save details
+save_button = ttkb.Button(frame, text="सेभ गर्नुहोस", bootstyle="info", command=save_details)
+save_button.grid(row=7, columnspan=2, pady=10, sticky="ew")
+
+# Label to display result, positioned at the bottom
 result_label = ttkb.Label(root, text="", font=result_font, justify=tk.CENTER, bootstyle="dark")
-result_label.pack(pady=10, fill="both", expand=True)
+result_label.pack(pady=20, padx=20, side="bottom", fill="both")
 
 # Start with Simple Interest calculation mode
 calculate_button.config(command=calculate_simple_interest)
 
-# Make the frame grid flexible for resizing
+# Make frame grid flexible for resizing
 for i in range(2):
     frame.columnconfigure(i, weight=1)
 
-# Bind the window resize event to dynamically adjust text size
+# Bind window resize event for dynamic text resizing
 root.bind('<Configure>', resize_text)
 
 # Start the GUI application
